@@ -1,57 +1,103 @@
 import streamlit as st
-import json
 
-# Example sign dictionary for testing
-sign_dict = {"hello": "hello.gif", "thank you": "thank_you.gif"}
+# Set custom CSS for styling
+st.markdown("""
+    <style>
+    body {
+        background-color: #83C983; /* Match the green background */
+    }
+    .main-title {
+        text-align: center;
+        font-size: 32px;
+        color: black;
+    }
+    .get-started {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+    }
+    .get-started button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 18px;
+        cursor: pointer;
+        border-radius: 25px;
+    }
+    .learn-more {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    .learn-more button {
+        background-color: #87CEEB;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        font-size: 14px;
+        cursor: pointer;
+        border-radius: 20px;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# Page navigation
-st.sidebar.title("Pantry Pal")
-page = st.sidebar.selectbox("Choose a page", ["Home", "Translate", "Favorites", "History", "Settings"])
+# Initialize session state to track the current page
+if 'page' not in st.session_state:
+    st.session_state.page = 1
 
-def voice_to_text(audio_file):
-    # Placeholder for API call - replace with actual API transcription
-    return "hello thank you"  # Dummy response
+# Function to move to the next page
+def next_page():
+    st.session_state.page += 1
 
-def display_signs(text):
-    words = text.lower().split()
-    for word in words:
-        if word in sign_dict:
-            st.image(sign_dict[word], caption=word)
+# Function to move to the previous page
+def prev_page():
+    st.session_state.page -= 1
 
-def save_favorite(text):
-    with open("favorites.json", "a") as file:
-        json.dump({"text": text}, file)
+# Home Page (Page 1)
+if st.session_state.page == 1:
+    st.markdown("<h1 class='main-title'>Welcome To You AI Food Recipe Generator</h1>", unsafe_allow_html=True)
+    
+    st.markdown("""
+        <div class='get-started'>
+            <button onclick="window.location.href='/'">get started</button>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button('get started'):
+        next_page()
+    
+    st.markdown("""
+        <div class='learn-more'>
+            <button onclick="window.location.href='/'">Learn More</button>
+        </div>
+    """, unsafe_allow_html=True)
 
-# Pages
-if page == "Home":
-    st.title("Welcome to SignSpeak")
-    st.write("Type or upload an audio file to translate to sign language.")
+# Input Method Selection Page (Page 2)
+elif st.session_state.page == 2:
+    st.markdown("<h3>How would you like to input your ingredients?</h3>", unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("Take a Picture of What you got"):
+            st.write("Feature not yet implemented.")
+    
+    with col2:
+        if st.button("Type in Manually"):
+            next_page()
+    
+    if st.button("⬅️ Back"):
+        prev_page()
 
-elif page == "Translate":
-    st.title("Translate to Sign Language")
-    audio_file = st.file_uploader("Upload audio file", type=["wav", "mp3"])
-    text_input = st.text_input("Or type a phrase to translate")
-
-    transcript = voice_to_text(audio_file) if audio_file else text_input
-    if transcript:
-        st.write("Transcription:", transcript)
-        display_signs(transcript)
-        if st.button("Add to Favorites"):
-            save_favorite(transcript)
-
-elif page == "Favorites":
-    st.title("Your Favorites")
-    with open("favorites.json", "r") as file:
-        favorites = json.load(file)
-    for favorite in favorites:
-        st.write(favorite["text"])
-
-elif page == "History":
-    st.title("Translation History")
-    # Logic for loading and displaying history (similar to Favorites)
-
-elif page == "Settings":
-    st.title("Settings")
-    if st.button("Clear History"):
-        open("history.json", "w").close()  # Clears the file
-    st.selectbox("Select Language", ["English", "Spanish", "French"])
+# Manual Input Page (Page 3)
+elif st.session_state.page == 3:
+    st.markdown("<h3>Tell us what you got... (tomatoes, beans...)</h3>", unsafe_allow_html=True)
+    ingredients = st.text_input("", key="ingredients")
+    
+    if st.button("Cook"):
+        st.write(f"Generating a recipe based on: {ingredients}")
+    
+    if st.button("⬅️ Back"):
+        prev_page()
