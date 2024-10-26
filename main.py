@@ -1,5 +1,10 @@
 import streamlit as st
 import json
+import requests
+from PIL import Image
+import io
+
+
 
 # Example sign dictionary for testing
 sign_dict = {"hello": "hello.gif", "thank you": "thank_you.gif"}
@@ -116,3 +121,59 @@ elif st.session_state.page == 4:
     
     if st.button("⬅️ Back"):
         prev_page()
+
+
+#image recognition API creds
+IMAGGA_API_KEY = "acc_3dbc34a6200e1d8"
+IMAGGA_API_SECRET = "bd700ca01192e873a808bc3d39cfb4e3"
+IMAGGA_ENDPOINT = "https://api.imagga.com/v2/tags"
+
+# Function to detect ingredients using Imagga
+def detect_ingredients(image_content):
+    response = requests.post(
+        IMAGGA_ENDPOINT,
+        auth=(IMAGGA_API_KEY, IMAGGA_API_SECRET),
+        files={"image": image_content}
+    )
+    
+    # Check if the request was successful
+    if response.status_code != 200:
+        st.error(f"Error: Received status code {response.status_code}")
+        st.error("Response text: " + response.text)  # Print the error response for more details
+        return []
+    
+    try:
+        result = response.json()
+        ingredients = [tag['tag']['en'] for tag in result.get("result", {}).get("tags", []) if tag['confidence'] > 50]
+        return ingredients
+    except json.JSONDecodeError as e:
+        st.error("Failed to parse JSON response. Response text was:")
+        st.write(response.text)  # Display the exact response text for more insight
+        st.error(str(e))
+        return []
+
+
+# Streamlit app layout
+st.title("Ingredient Detector with Imagga")
+
+# Capture image input
+camera_input = st.camera_input("Take a picture") or st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+
+if camera_input:
+    image = Image.open(camera_input)
+    st.image(image, caption="Uploaded Image", use_column_width=True)
+    
+    # Convert image to bytes for API processing
+    image_bytes = io.BytesIO()
+    image.save(image_bytes, format="JPEG")
+    image_bytes = image_bytes.getvalue()
+    
+    # Detect ingredients
+    st.write("Analyzing the image...")
+    ingredients = detect_ingredients(image_bytes)
+    
+    # Display results
+    if ingredients:
+        st.write("Ingredients detected:", ingredients)
+    else:
+        st.write("No recognizable ingredients detected.")
