@@ -4,10 +4,6 @@ import json
 # Example sign dictionary for testing
 sign_dict = {"hello": "hello.gif", "thank you": "thank_you.gif"}
 
-# Page navigation
-st.sidebar.title("Pantry Pal")
-page = st.sidebar.selectbox("Choose a page", ["Home", "Translate", "Favorites", "History", "Settings"])
-
 def voice_to_text(audio_file):
     # Placeholder for API call - replace with actual API transcription
     return "hello thank you"  # Dummy response
@@ -21,6 +17,35 @@ def display_signs(text):
 def save_favorite(text):
     with open("favorites.json", "a") as file:
         json.dump({"text": text}, file)
+
+# Apply custom CSS for bluish-green background color, centered title, and better buttons layout
+st.markdown(
+    """
+    <style>
+    /* Change background color of the main container */
+    .stApp {
+        background-color: #3CB371;  /* Bluish Evergreen Tint */
+    }
+    .main-title {
+        color: white;
+        text-align: center;
+        font-size: 3rem;
+        margin-bottom: 20px;
+    }
+    /* Center the Get Started button */
+    .center-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    button {
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # Initialize session state to track the current page
 if 'page' not in st.session_state:
@@ -36,22 +61,11 @@ def prev_page():
 
 # Home Page (Page 1)
 if st.session_state.page == 1:
-    st.markdown("<h1 class='main-title'>Welcome To You AI Food Recipe Generator</h1>", unsafe_allow_html=True)
-    
-    st.markdown("""
-        <div class='get-started'>
-            <button onclick="window.location.href='/'">get started</button>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    if st.button('get started'):
+    st.markdown("<h1 class='main-title'>Pantry Pal</h1>", unsafe_allow_html=True)
+
+
+    if st.button('Get Started'):
         next_page()
-    
-    st.markdown("""
-        <div class='learn-more'>
-            <button onclick="window.location.href='/'">Learn More</button>
-        </div>
-    """, unsafe_allow_html=True)
 
 # Input Method Selection Page (Page 2)
 elif st.session_state.page == 2:
@@ -61,7 +75,7 @@ elif st.session_state.page == 2:
     
     with col1:
         if st.button("Take a Picture of What you got"):
-            st.write("Feature not yet implemented.")
+            st.session_state.page = 4  # Move to the take a picture page
     
     with col2:
         if st.button("Type in Manually"):
@@ -77,6 +91,28 @@ elif st.session_state.page == 3:
     
     if st.button("Cook"):
         st.write(f"Generating a recipe based on: {ingredients}")
+    
+    if st.button("⬅️ Back"):
+        prev_page()
+
+# Take a Picture or Upload Image Page (Page 4)
+elif st.session_state.page == 4:
+    st.markdown("<h3>Take a picture or upload an image of your ingredients</h3>", unsafe_allow_html=True)
+    
+    # Camera input
+    camera_input = st.camera_input("Take a picture")
+
+    # File uploader input
+    uploaded_file = st.file_uploader("Or upload an image", type=["jpg", "jpeg", "png"])
+    
+    # Display the image if either camera or upload input is provided
+    if camera_input is not None:
+        st.image(camera_input, caption="Captured Image.", use_column_width=True)
+        st.write("Analyzing the image...")  # Placeholder for image processing logic
+    
+    elif uploaded_file is not None:
+        st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
+        st.write("Analyzing the image...")  # Placeholder for image processing logic
     
     if st.button("⬅️ Back"):
         prev_page()
