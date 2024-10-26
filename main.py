@@ -162,7 +162,7 @@ elif st.session_state.page == 3:
         st.session_state.ingredients = ""
 
     # Display the current ingredients in a text input
-    #ingredients_input = st.text_input("Ingredients:", value=st.session_state.ingredients, key="ingredients_input")
+    ingredients_input = st.text_input("Ingredients:", value=st.session_state.ingredients, key="ingredients_input")
 
     # Button to start live transcription
     if st.button("🎤 Start Speaking"):
