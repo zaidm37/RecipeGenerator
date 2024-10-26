@@ -29,7 +29,7 @@ MarkupSafe==3.0.2
 matplotlib==3.9.0rc2
 mdurl==0.1.2
 narwhals==1.10.0
-numpy==2.0.0rc1
+numpy==2.1.1
 openai==1.52.2
 packaging==24.0
 pandas==2.2.2
@@ -59,3 +59,6 @@ tqdm==4.66.5
 typing_extensions==4.12.2
 tzdata==2024.1
 urllib3==2.2.3
+vosk==0.3.45
+pydub==0.25.1
+speechrecognition==3.9.0
