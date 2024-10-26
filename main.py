@@ -161,8 +161,11 @@ elif st.session_state.page == 3:
     if 'ingredients' not in st.session_state:
         st.session_state.ingredients = ""
 
-    # Display the current ingredients in a text input
-    ingredients_input = st.text_input("Ingredients:", value=st.session_state.ingredients, key="ingredients_input")
+    # Display a single text input that shows either typed or transcribed ingredients
+    ingredients = st.text_input("Ingredients:", value=st.session_state.ingredients, key="ingredients_input")
+
+    # Update session state when the user types manually
+    st.session_state.ingredients = ingredients
 
     # Button to start live transcription
     if st.button("🎤 Start Speaking"):
@@ -180,11 +183,12 @@ elif st.session_state.page == 3:
                 transcription = recognizer.recognize_google(audio)  # Recognize the audio using Google Speech Recognition
                 st.session_state.is_recording = False
                 st.success("Transcription completed!")
-                st.write("Transcribed Text:")
-                st.write(transcription)  # Display the transcription
 
-                # Update ingredients in session state
-                st.session_state.ingredients = transcription  # Save transcription to session state
+                # Update the ingredients session state with the transcribed text
+                st.session_state.ingredients = transcription
+
+                # Manually update the text input to reflect new ingredients
+                st.text_input("Ingredients:", value=st.session_state.ingredients, key="ingredients_input_updated")
 
             except sr.WaitTimeoutError:
                 st.error("Listening timed out. Please try again.")
@@ -193,11 +197,9 @@ elif st.session_state.page == 3:
             except sr.RequestError as e:
                 st.error(f"Could not request results from Google Speech Recognition service; {e}")
 
-    # Show updated ingredients in the text input
-    st.text_input("Ingredients:", value=st.session_state.ingredients, key="updated_ingredients_input", disabled=False)
-
+    # Button to generate recipes using the current ingredients in session state
     if st.button("Cook"):
-        # Get the ingredients from session state
+        # Get the ingredients list from session state
         ingredient_list = st.session_state.ingredients.split(',') if st.session_state.ingredients else []
         
         if ingredient_list:
@@ -214,6 +216,7 @@ elif st.session_state.page == 3:
         else:
             st.warning("Please enter some ingredients or use the microphone to speak.")
 
+    # Button to go back to the previous page
     if st.button("⬅️ Back"):
         prev_page()
     
