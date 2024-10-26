@@ -3,14 +3,18 @@ import json
 import requests
 from PIL import Image
 import io
-
-
+import os
+import wave
+from vosk import Model, KaldiRecognizer
+from pydub import AudioSegment
+import speech_recognition as sr
 
 # Example sign dictionary for testing
 sign_dict = {"hello": "hello.gif", "thank you": "thank_you.gif"}
 
+# Function for Voice to Text (for placeholder use)
 def voice_to_text(audio_file):
-    # Placeholder for API call - replace with actual API transcription
+
     return "hello thank you"  # Dummy response
 
 def display_signs(text):
@@ -23,123 +27,23 @@ def save_favorite(text):
     with open("favorites.json", "a") as file:
         json.dump({"text": text}, file)
 
-# Apply custom CSS for bluish-green background color, centered title, and better buttons layout
-st.markdown(
-    """
-    <style>
-    /* Change background color of the main container */
-    .stApp {
-        background-color: #3CB371;  /* Bluish Evergreen Tint */
-    }
-    .main-title {
-        color: white;
-        text-align: center;
-        font-size: 3rem;
-        margin-bottom: 20px;
-    }
-    /* Center the Get Started button */
-    .center-container {
-        display: flex;
-        justify-content: center;
-        margin-top: 20px;
-    }
-    button {
-        padding: 10px 20px;
-        font-size: 16px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# Initialize session state to track the current page
-if 'page' not in st.session_state:
-    st.session_state.page = 1
-
-# Function to move to the next page
-def next_page():
-    st.session_state.page += 1
-
-# Function to move to the previous page
-def prev_page():
-    st.session_state.page -= 1
-
-# Home Page (Page 1)
-if st.session_state.page == 1:
-    st.markdown("<h1 class='main-title'>Pantry Pal</h1>", unsafe_allow_html=True)
-
-
-    if st.button('Get Started'):
-        next_page()
-
-# Input Method Selection Page (Page 2)
-elif st.session_state.page == 2:
-    st.markdown("<h3>How would you like to input your ingredients?</h3>", unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("Take a Picture of What you got"):
-            st.session_state.page = 4  # Move to the take a picture page
-    
-    with col2:
-        if st.button("Type in Manually"):
-            next_page()
-    
-    if st.button("⬅️ Back"):
-        prev_page()
-
-# Manual Input Page (Page 3)
-elif st.session_state.page == 3:
-    st.markdown("<h3>Tell us what you got... (tomatoes, beans...)</h3>", unsafe_allow_html=True)
-    ingredients = st.text_input("", key="ingredients")
-    
-    if st.button("Cook"):
-        st.write(f"Generating a recipe based on: {ingredients}")
-    
-    if st.button("⬅️ Back"):
-        prev_page()
-
-# Take a Picture or Upload Image Page (Page 4)
-elif st.session_state.page == 4:
-    st.markdown("<h3>Take a picture or upload an image of your ingredients</h3>", unsafe_allow_html=True)
-    
-    # Camera input
-    camera_input = st.camera_input("Take a picture")
-
-    # File uploader input
-    uploaded_file = st.file_uploader("Or upload an image", type=["jpg", "jpeg", "png"])
-    
-    # Display the image if either camera or upload input is provided
-    if camera_input is not None:
-        st.image(camera_input, caption="Captured Image.", use_column_width=True)
-        st.write("Analyzing the image...")  # Placeholder for image processing logic
-    
-    elif uploaded_file is not None:
-        st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
-        st.write("Analyzing the image...")  # Placeholder for image processing logic
-    
-    if st.button("⬅️ Back"):
-        prev_page()
-
-
-#image recognition API creds
+# Image Recognition API Credentials
 IMAGGA_API_KEY = "acc_3dbc34a6200e1d8"
 IMAGGA_API_SECRET = "bd700ca01192e873a808bc3d39cfb4e3"
 IMAGGA_ENDPOINT = "https://api.imagga.com/v2/tags"
 
-# Function to detect ingredients using Imagga
 def detect_ingredients(image_content):
     response = requests.post(
         IMAGGA_ENDPOINT,
         auth=(IMAGGA_API_KEY, IMAGGA_API_SECRET),
         files={"image": image_content}
     )
-    
-    # Check if the request was successful
+
+
     if response.status_code != 200:
-        st.error(f"Error: Received status code {response.status_code}")
-        st.error("Response text: " + response.text)  # Print the error response for more details
+
+        st.error(f"Error: Status code {response.status_code}")
+        st.error("Response text: " + response.text)
         return []
     
     try:
@@ -147,33 +51,175 @@ def detect_ingredients(image_content):
         ingredients = [tag['tag']['en'] for tag in result.get("result", {}).get("tags", []) if tag['confidence'] > 50]
         return ingredients
     except json.JSONDecodeError as e:
-        st.error("Failed to parse JSON response. Response text was:")
-        st.write(response.text)  # Display the exact response text for more insight
+        st.error("Failed to parse JSON response.")
+        st.write(response.text)
         st.error(str(e))
         return []
 
+# Vosk Transcription Setup and Integration
+def transcribe_audio(audio_file_path, model_path="vosk-model-small-en-us-0.15"):
+    # Ensure model is downloaded
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"Model not found at {model_path}. Download it from the Vosk website.")
+    model = Model(model_path)
+    wf = wave.open(audio_file_path, "rb")
+    if wf.getnchannels() != 1 or wf.getsampwidth() != 2 or wf.getcomptype() != "NONE":
+        raise ValueError("Audio file must be WAV format, mono PCM.")
+    recognizer = KaldiRecognizer(model, wf.getframerate())
+    result_text = ""
+    while True:
+        data = wf.readframes(4000)
+        if len(data) == 0:
+            break
+        if recognizer.AcceptWaveform(data):
+            result = recognizer.Result()
+            result_text += json.loads(result).get('text', '') + " "
+    wf.close()
+    return result_text.strip()
 
-# Streamlit app layout
-st.title("Ingredient Detector with Imagga")
+def get_recipes(ingredients):
+    api_url = "https://api.spoonacular.com/recipes/findByIngredients"
+    api_key = "f51f1696cfdf434f9b5081e01e534ea0"  # Replace with your actual API key
 
-# Capture image input
-camera_input = st.camera_input("Take a picture") or st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
-
-if camera_input:
-    image = Image.open(camera_input)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    params = {
+        'ingredients': ','.join(ingredients),
+        'apiKey': api_key,
+        'number': 5,  # Number of recipes to return
+    }
     
-    # Convert image to bytes for API processing
-    image_bytes = io.BytesIO()
-    image.save(image_bytes, format="JPEG")
-    image_bytes = image_bytes.getvalue()
+    response = requests.get(api_url, params=params)
     
-    # Detect ingredients
-    st.write("Analyzing the image...")
-    ingredients = detect_ingredients(image_bytes)
-    
-    # Display results
-    if ingredients:
-        st.write("Ingredients detected:", ingredients)
+    if response.status_code == 200:
+        return response.json()  # Return the JSON response containing recipes
     else:
-        st.write("No recognizable ingredients detected.")
+        st.error(f"Error fetching recipes: {response.status_code}")
+        return []
+
+# Custom CSS
+st.markdown(
+    """
+    <style>
+    .stApp { background-color: #3CB371; }
+    .main-title { color: white; text-align: center; font-size: 3rem; margin-bottom: 20px; }
+    .center-container { display: flex; justify-content: center; margin-top: 20px; }
+    button { padding: 10px 20px; font-size: 16px; }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Initialize page state
+if 'page' not in st.session_state:
+    st.session_state.page = 1
+
+# Page navigation functions
+def next_page():
+    st.session_state.page += 1
+
+
+def prev_page():
+    st.session_state.page -= 1
+
+# Page 1: Home
+if st.session_state.page == 1:
+    st.markdown("<h1 class='main-title'>Pantry Pal</h1>", unsafe_allow_html=True)
+
+
+    if st.button('Get Started'):
+        next_page()
+
+# Page 2: Input Method
+elif st.session_state.page == 2:
+    st.markdown("<h3>How would you like to input your ingredients?</h3>", unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("Take a Picture of What you got"):
+            st.session_state.page = 4
+    with col2:
+        if st.button("Type in Manually"):
+            next_page()
+
+    if st.button("⬅️ Back"):
+        prev_page()
+
+# Page 3: Manual Input
+elif st.session_state.page == 3:
+    st.markdown("<h3>Tell us what you got... (e.g., tomatoes, beans...)</h3>", unsafe_allow_html=True)
+    
+    # Input field for ingredients
+    ingredients = st.text_input("", key="ingredients")
+    # Button to start live transcription
+    if st.button("🎤 Start Speaking"):
+        st.session_state.is_recording = True
+        st.markdown("**Listening...**")
+
+        # Function to transcribe audio live
+        recognizer = sr.Recognizer()
+        mic = sr.Microphone()
+
+        with mic as source:
+            recognizer.adjust_for_ambient_noise(source)  # Adjust for ambient noise
+            try:
+                audio = recognizer.listen(source, timeout=5)  # Listen for the audio
+                transcription = recognizer.recognize_google(audio)  # Recognize the audio using Google Speech Recognition
+                st.session_state.is_recording = False
+                st.success("Transcription completed!")
+                st.write("Transcribed Text:")
+                st.write(transcription)  # Display the transcription
+                ingredients = transcription  # Use transcription as the ingredients input
+            except sr.WaitTimeoutError:
+                st.error("Listening timed out. Please try again.")
+            except sr.UnknownValueError:
+                st.error("Sorry, I could not understand the audio.")
+            except sr.RequestError as e:
+                st.error(f"Could not request results from Google Speech Recognition service; {e}")
+
+    if st.button("Cook"):
+        if ingredients:  # Check if there are any ingredients
+            ingredient_list = [ingredient.strip() for ingredient in ingredients.split(',')]  # Split ingredients by commas
+            recipes = get_recipes(ingredient_list)  # Fetch recipes based on ingredients
+
+            # Display the recipes
+            if recipes:
+                st.write("Here are some recipes you can try:")
+                for recipe in recipes:
+                    st.write(f"- **{recipe['title']}**")
+            else:
+                st.write("No recipes found for the given ingredients.")
+        else:
+            st.warning("Please enter some ingredients or use the microphone to speak.")
+
+    if st.button("⬅️ Back"):
+        prev_page()
+    
+# Page 5: Image Recognition
+elif st.session_state.page == 4:  # Update the page number to match the new logic
+    st.markdown("<h3>Take a picture or upload an image of your ingredients</h3>", unsafe_allow_html=True)
+    camera_input = st.camera_input("Take a picture") or st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+
+
+    if camera_input:
+        image = Image.open(camera_input)
+        st.image(image, caption="Uploaded Image", use_column_width=True)
+
+
+        image_bytes = io.BytesIO()
+        image.save(image_bytes, format="JPEG")
+        image_bytes = image_bytes.getvalue()
+
+
+        st.write("Analyzing the image...")
+        ingredients = detect_ingredients(image_bytes)
+        
+        if ingredients:
+            st.write("Ingredients detected:", ingredients)
+        else:
+            st.write("No recognizable ingredients detected.")
+
+    if st.button("⬅️ Back"):
+        prev_page()
+
+
+
