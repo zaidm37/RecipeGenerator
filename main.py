@@ -206,11 +206,13 @@ elif st.session_state.page == 3:
             ingredient_list = [ingredient.strip() for ingredient in ingredient_list]  # Clean up whitespace
             recipes = get_recipes(ingredient_list)  # Fetch recipes based on ingredients
 
-            # Display the recipes
+            # Display the recipes with clickable links
             if recipes:
                 st.write("Here are some recipes you can try:")
                 for recipe in recipes:
-                    st.write(f"- **{recipe['title']}**")
+                    recipe_title = recipe['title']
+                    search_url = f"https://www.google.com/search?q={recipe_title.replace(' ', '+')}"
+                    st.markdown(f"- **[{recipe_title}]({search_url})**", unsafe_allow_html=True)
             else:
                 st.write("No recipes found for the given ingredients.")
         else:
