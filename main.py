@@ -156,9 +156,14 @@ elif st.session_state.page == 2:
 # Page 3: Manual Input
 elif st.session_state.page == 3:
     st.markdown("<h3>Tell us what you got... (e.g., tomatoes, beans...)</h3>", unsafe_allow_html=True)
-    
-    # Input field for ingredients
-    ingredients = st.text_input("", key="ingredients")
+
+    # Initialize ingredients session state if it doesn't exist
+    if 'ingredients' not in st.session_state:
+        st.session_state.ingredients = ""
+
+    # Display the current ingredients in a text input
+    #ingredients_input = st.text_input("Ingredients:", value=st.session_state.ingredients, key="ingredients_input")
+
     # Button to start live transcription
     if st.button("🎤 Start Speaking"):
         st.session_state.is_recording = True
@@ -177,7 +182,10 @@ elif st.session_state.page == 3:
                 st.success("Transcription completed!")
                 st.write("Transcribed Text:")
                 st.write(transcription)  # Display the transcription
-                ingredients = transcription  # Use transcription as the ingredients input
+
+                # Update ingredients in session state
+                st.session_state.ingredients = transcription  # Save transcription to session state
+
             except sr.WaitTimeoutError:
                 st.error("Listening timed out. Please try again.")
             except sr.UnknownValueError:
@@ -185,9 +193,15 @@ elif st.session_state.page == 3:
             except sr.RequestError as e:
                 st.error(f"Could not request results from Google Speech Recognition service; {e}")
 
+    # Show updated ingredients in the text input
+    st.text_input("Ingredients:", value=st.session_state.ingredients, key="updated_ingredients_input", disabled=False)
+
     if st.button("Cook"):
-        if ingredients:  # Check if there are any ingredients
-            ingredient_list = [ingredient.strip() for ingredient in ingredients.split(',')]  # Split ingredients by commas
+        # Get the ingredients from session state
+        ingredient_list = st.session_state.ingredients.split(',') if st.session_state.ingredients else []
+        
+        if ingredient_list:
+            ingredient_list = [ingredient.strip() for ingredient in ingredient_list]  # Clean up whitespace
             recipes = get_recipes(ingredient_list)  # Fetch recipes based on ingredients
 
             # Display the recipes
