@@ -1,14 +1,14 @@
-import streamlit as st
+import streamlit as st # type: ignore
 import json
-import requests
-from PIL import Image
+import requests # type: ignore
+from PIL import Image # type: ignore
 import io
 
 import os
 import wave
-from vosk import Model, KaldiRecognizer
-from pydub import AudioSegment
-import speech_recognition as sr
+from vosk import Model, KaldiRecognizer # type: ignore
+from pydub import AudioSegment # type: ignore
+import speech_recognition as sr # type: ignore
 
 
 # Example sign dictionary for testing
