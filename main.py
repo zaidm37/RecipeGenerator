@@ -220,10 +220,9 @@ elif st.session_state.page == 3:
 
     # Button to go back to the previous page
     if st.button("⬅️ Back"):
-        prev_page()
-    
+        prev_page()    
 
-# Page 5: Image Recognition
+# Page 4: Image Recognition
 elif st.session_state.page == 4:  # Update the page number to match the new logic
     st.markdown("<h3>Take a picture or upload an image of your ingredients</h3>", unsafe_allow_html=True)
     camera_input = st.camera_input("Take a picture") or st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
@@ -249,6 +248,6 @@ elif st.session_state.page == 4:  # Update the page number to match the new logi
 
     if st.button("⬅️ Back"):
         prev_page()
-
+        prev_page()
 
 
