@@ -3,17 +3,21 @@ import json
 import requests
 from PIL import Image
 import io
+
 import os
 import wave
 from vosk import Model, KaldiRecognizer
 from pydub import AudioSegment
 import speech_recognition as sr
 
+
 # Example sign dictionary for testing
 sign_dict = {"hello": "hello.gif", "thank you": "thank_you.gif"}
 
 # Function for Voice to Text (for placeholder use)
 def voice_to_text(audio_file):
+
+
 
     return "hello thank you"  # Dummy response
 
@@ -99,14 +103,17 @@ def get_recipes(ingredients):
 st.markdown(
     """
     <style>
+
     .stApp { background-color: #3CB371; }
     .main-title { color: white; text-align: center; font-size: 3rem; margin-bottom: 20px; }
     .center-container { display: flex; justify-content: center; margin-top: 20px; }
     button { padding: 10px 20px; font-size: 16px; }
+
     </style>
     """,
     unsafe_allow_html=True
 )
+
 
 # Initialize page state
 if 'page' not in st.session_state:
@@ -117,13 +124,13 @@ def next_page():
     st.session_state.page += 1
 
 
+
 def prev_page():
     st.session_state.page -= 1
 
 # Page 1: Home
 if st.session_state.page == 1:
     st.markdown("<h1 class='main-title'>Pantry Pal</h1>", unsafe_allow_html=True)
-
 
     if st.button('Get Started'):
         next_page()
@@ -137,6 +144,8 @@ elif st.session_state.page == 2:
     with col1:
         if st.button("Take a Picture of What you got"):
             st.session_state.page = 4
+
+
     with col2:
         if st.button("Type in Manually"):
             next_page()
@@ -194,6 +203,7 @@ elif st.session_state.page == 3:
     if st.button("⬅️ Back"):
         prev_page()
     
+
 # Page 5: Image Recognition
 elif st.session_state.page == 4:  # Update the page number to match the new logic
     st.markdown("<h3>Take a picture or upload an image of your ingredients</h3>", unsafe_allow_html=True)
