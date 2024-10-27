@@ -197,7 +197,7 @@ elif st.session_state.page == 3:
     
     with st.container():
 
-        st.markdown("<div class='input-container'>", unsafe_allow_html=True)
+        #st.markdown("<div class='input-container'>", unsafe_allow_html=True)
 
         ingredients = st.text_input("", 
                                   value=st.session_state.ingredients,
@@ -207,34 +207,32 @@ elif st.session_state.page == 3:
 
         col1, col2 = st.columns([1,1])
 
-        with col1:
-            if st.button("⬅️ Back"):
-                st.session_state.page = 2
-        with col2:
-            if st.button("Find Recipes 🍳"):
-                if ingredients:
-                    ingredient_list = [i.strip() for i in ingredients.split(',') if i.strip()]
-                    with st.spinner('Finding recipes...'):
-                        recipes = get_tasty_recipes(ingredient_list)
+        if st.button("Find Recipes 🍳"):
+            if ingredients:
+                ingredient_list = [i.strip() for i in ingredients.split(',') if i.strip()]
+                with st.spinner('Finding recipes...'):
+                    recipes = get_tasty_recipes(ingredient_list)
 
-                    if recipes and recipes.get('results'):
-                        st.success("Found some recipes for you!")
-                        for recipe in recipes['results']:
-                            thumbnail_url = recipe.get('thumbnail_url')
-                            st.markdown(f"""
-                                 <div class='recipe-card'>
-                                     <h3>{recipe['name']}</h3>
-                                        {"<img src='" + thumbnail_url + "' width='100%' style='margin-bottom: 1rem;' />" if thumbnail_url else ""}
-                                         <a href="{recipe['original_video_url'] or recipe['video_url']}" target="_blank">
-                                             View Recipe →
-                </a>
-            </div>
-        """, unsafe_allow_html=True)
+                if recipes and recipes.get('results'):
+                    st.success("Found some recipes for you!")
+                    for recipe in recipes['results']:
+                        thumbnail_url = recipe.get('thumbnail_url')
+                        st.markdown(f"""
+                                <div class='recipe-card'>
+                                    <h3>{recipe['name']}</h3>
+                                    {"<img src='" + thumbnail_url + "' width='100%' style='margin-bottom: 1rem;' />" if thumbnail_url else ""}
+                                        <a href="{recipe['original_video_url'] or recipe['video_url']}" target="_blank">
+                                            View Recipe →
+            </a>
+        </div>
+    """, unsafe_allow_html=True)
 
-                    else:
-                        st.error("No recipes found. Try different ingredients!")
                 else:
-                    st.warning("Please enter some ingredients first!")
+                    st.error("No recipes found. Try different ingredients!")
+            else:
+                st.warning("Please enter some ingredients first!")
+        if st.button("⬅️ Back to Home"):
+                st.session_state.page = 1
 
 
 # Page 4: Voice Input
