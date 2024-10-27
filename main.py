@@ -170,10 +170,10 @@ elif st.session_state.page == 2:
 
     with col2:
         if st.button("Type in Manually"):
-            next_page()
+            st.session_state.page = 3
 
     if st.button("⬅️ Back"):
-        prev_page()
+        st.session_state.page = 1
 
 # Page 3: Manual Input
 elif st.session_state.page == 3:
@@ -188,36 +188,6 @@ elif st.session_state.page == 3:
 
     # Update session state when the user types manually
     st.session_state.ingredients = ingredients
-
-    # Button to start live transcription
-    if st.button("🎤 Start Speaking"):
-        st.session_state.is_recording = True
-        st.markdown("**Listening...**")
-
-        # Function to transcribe audio live
-        recognizer = sr.Recognizer()
-        mic = sr.Microphone()
-
-        with mic as source:
-            recognizer.adjust_for_ambient_noise(source)  # Adjust for ambient noise
-            try:
-                audio = recognizer.listen(source, timeout=5)  # Listen for the audio
-                transcription = recognizer.recognize_google(audio)  # Recognize the audio using Google Speech Recognition
-                st.session_state.is_recording = False
-                st.success("Transcription completed!")
-
-                # Update the ingredients session state with the transcribed text
-                st.session_state.ingredients = transcription
-
-                # Manually update the text input to reflect new ingredients
-                st.text_input("Ingredients:", value=st.session_state.ingredients, key="ingredients_input_updated")
-
-            except sr.WaitTimeoutError:
-                st.error("Listening timed out. Please try again.")
-            except sr.UnknownValueError:
-                st.error("Sorry, I could not understand the audio.")
-            except sr.RequestError as e:
-                st.error(f"Could not request results from Google Speech Recognition service; {e}")
 
     # Button to generate recipes using the current ingredients in session state
     if st.button("Cook"):
@@ -242,7 +212,7 @@ elif st.session_state.page == 3:
 
     # Button to go back to the previous page
     if st.button("⬅️ Back"):
-        prev_page()    
+        st.session_state.page = 2    
 
 # Page 5: Voice recognition
 elif st.session_state.page == 5:  # Update the page number to match the new logic
@@ -269,8 +239,7 @@ elif st.session_state.page == 5:  # Update the page number to match the new logi
             st.write("No recognizable ingredients detected.")
 
     if st.button("⬅️ Back"):
-        prev_page()
-        prev_page()
+        st.session_state.page = 2
 
 # Page 4: Manual Input
 elif st.session_state.page == 4:
@@ -339,4 +308,4 @@ elif st.session_state.page == 4:
 
     # Button to go back to the previous page
     if st.button("⬅️ Back"):
-        prev_page()    
+        st.session_state.page = 2    
