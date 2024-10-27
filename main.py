@@ -240,6 +240,7 @@ elif st.session_state.page == 3:
         if st.button("⬅️ Back to Home"):
                 st.session_state.page = 1
 
+
 # Page 4: Voice Input
 elif st.session_state.page == 4:
     st.markdown("<h2 class='subtitle'>Speak Your Ingredients</h2>", unsafe_allow_html=True)
@@ -291,3 +292,4 @@ elif st.session_state.page == 4:
 
     if st.button("⬅️ Back to Home"):
         st.session_state.page = 1
+
