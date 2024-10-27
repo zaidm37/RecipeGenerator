@@ -199,61 +199,179 @@ def main():
             if st.button("Get Started", key="start"):
                 st.session_state.page = 2
 
-    elif st.session_state.page == 2:
-        # Input Selection Page
-        st.markdown('<h1 class="main-title">How would you like to input ingredients?</h1>', unsafe_allow_html=True)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("📸 Take Photo", key="photo"):
-                st.session_state.page = 5
-        with col2:
-            if st.button("🎤 Voice Input", key="voice"):
-                st.session_state.page = 4
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("✍️ Type Manually", key="type"):
-            st.session_state.page = 3
-            
-        if st.button("← Back", key="back2"):
-            st.session_state.page = 1
 
-    elif st.session_state.page == 3:
-        # Manual Input Page
-        st.markdown('<h1 class="main-title">Enter Your Ingredients</h1>', unsafe_allow_html=True)
+
+def prev_page():
+    st.session_state.page -= 1
+
+# Page 1: Home
+if st.session_state.page == 1:
+    st.markdown("<h1 class='main-title'>Pantry Pal</h1>", unsafe_allow_html=True)
+
+    if st.button('Get Started'):
+        next_page()
+
+# Page 2: Input Method
+elif st.session_state.page == 2:
+    st.markdown("<h3>How would you like to input your ingredients?</h3>", unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("Tell us with your voice"):
+            st.session_state.page = 4
+
+
+    with col2:
+        if st.button("Type in Manually"):
+            next_page()
+
+    if st.button("⬅️ Back"):
+        prev_page()
+
+# Page 3: Manual Input
+elif st.session_state.page == 3:
+    st.markdown("<h3>Tell us what you got... (e.g., tomatoes, beans...)</h3>", unsafe_allow_html=True)
+
+    # Initialize ingredients session state if it doesn't exist
+    if 'ingredients' not in st.session_state:
+        st.session_state.ingredients = ""
+
+    # Display a single text input that shows either typed or transcribed ingredients
+    ingredients = st.text_input("Ingredients:", value=st.session_state.ingredients, key="ingredients_input")
+
+    # Update session state when the user types manually
+    st.session_state.ingredients = ingredients
+
+    # Button to start live transcription
+    if st.button("🎤 Start Speaking"):
+        st.session_state.is_recording = True
+        st.markdown("**Listening...**")
+
+        # Function to transcribe audio live
+        recognizer = sr.Recognizer()
+        mic = sr.Microphone()
+
+        with mic as source:
+            recognizer.adjust_for_ambient_noise(source)  # Adjust for ambient noise
+            try:
+                audio = recognizer.listen(source, timeout=5)  # Listen for the audio
+                transcription = recognizer.recognize_google(audio)  # Recognize the audio using Google Speech Recognition
+                st.session_state.is_recording = False
+                st.success("Transcription completed!")
+
+                # Update the ingredients session state with the transcribed text
+                st.session_state.ingredients = transcription
+
+                # Manually update the text input to reflect new ingredients
+                st.text_input("Ingredients:", value=st.session_state.ingredients, key="ingredients_input_updated")
+
+            except sr.WaitTimeoutError:
+                st.error("Listening timed out. Please try again.")
+            except sr.UnknownValueError:
+                st.error("Sorry, I could not understand the audio.")
+            except sr.RequestError as e:
+                st.error(f"Could not request results from Google Speech Recognition service; {e}")
+
+    # Button to generate recipes using the current ingredients in session state
+    if st.button("Cook"):
+        # Get the ingredients list from session state
+        ingredient_list = st.session_state.ingredients.split(',') if st.session_state.ingredients else []
         
-        with st.container():
-            ingredients = st.text_input(
-                "Enter ingredients (separated by commas):",
-                value=", ".join(st.session_state.ingredients),
-                key="ingredients_input"
-            )
-            
-            if ingredients:
-                ingredient_list = [i.strip() for i in ingredients.split(",") if i.strip()]
-                st.session_state.ingredients = ingredient_list
-                
-                st.markdown("<div style='margin: 1rem 0;'>", unsafe_allow_html=True)
-                for ingredient in ingredient_list:
-                    st.markdown(f'<span class="ingredient-tag">{ingredient}</span>', unsafe_allow_html=True)
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-                if st.button("🔍 Find Recipes", key="find"):
-                    with st.spinner("Searching for recipes..."):
-                        recipes = get_tasty_recipes(ingredient_list)
-                        if recipes and recipes.get('results'):
-                            st.success(f"Found {len(recipes['results'])} recipes!")
-                            for recipe in recipes['results']:
-                                display_recipe_card(recipe)
-                        else:
-                            st.warning("No recipes found. Try different ingredients!")
+        if ingredient_list:
+            ingredient_list = [ingredient.strip() for ingredient in ingredient_list]  # Clean up whitespace
+            recipes = get_tasty_recipes(ingredient_list)  # Fetch recipes based on ingredients
+
+            # Display the recipes with clickable links
+            if recipes:
+                st.write("Here are some recipes you can try:")
+                for recipe in recipes['results']:
+                    recipe_title = recipe['name']
+                    recipe_url = recipe['original_video_url'] or recipe['video_url']  # Use video link if available
+                    st.markdown(f"- **[{recipe_title}]({recipe_url})**", unsafe_allow_html=True)
+            else:
+                st.write("No recipes found for the given ingredients.")
+        else:
+            st.warning("Please enter some ingredients or use the microphone to speak.")
+
+    # Button to go back to the previous page
+    if st.button("⬅️ Back"):
+        prev_page()    
+
+# Page 5: Voice recognition
+elif st.session_state.page == 5:  # Update the page number to match the new logic
+    st.markdown("<h3>Take a picture or upload an image of your ingredients</h3>", unsafe_allow_html=True)
+    camera_input = st.camera_input("Take a picture") or st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+
+
+    if camera_input:
+        image = Image.open(camera_input)
+        st.image(image, caption="Uploaded Image", use_column_width=True)
+
+
+        image_bytes = io.BytesIO()
+        image.save(image_bytes, format="JPEG")
+        image_bytes = image_bytes.getvalue()
+
+
+        st.write("Analyzing the image...")
+        ingredients = detect_ingredients(image_bytes)
         
         if st.button("← Back", key="back3"):
             st.session_state.page = 2
 
-    elif st.session_state.page == 4:
-        # Voice Input Page
-        st.markdown('<h1 class="main-title">Voice Input</h1>', unsafe_allow_html=True)
+    if st.button("⬅️ Back"):
+        prev_page()
+        prev_page()
+
+# Page 4: Manual Input
+elif st.session_state.page == 4:
+    st.markdown("<h3>Tell us what you got... (e.g., tomatoes, beans...)</h3>", unsafe_allow_html=True)
+
+    # Initialize ingredients session state if it doesn't exist
+    if 'ingredients' not in st.session_state:
+        st.session_state.ingredients = ""
+
+    # Display a single text input that shows either typed or transcribed ingredients
+    ingredients = st.text_input("Ingredients:", value=st.session_state.ingredients, key="ingredients_input")
+
+    # Update session state when the user types manually
+    st.session_state.ingredients = ingredients
+
+    # Button to start live transcription
+    if st.button("🎤 Start Speaking"):
+        st.session_state.is_recording = True
+        st.markdown("**Listening...**")
+
+        # Function to transcribe audio live
+        recognizer = sr.Recognizer()
+        mic = sr.Microphone()
+
+        with mic as source:
+            recognizer.adjust_for_ambient_noise(source)  # Adjust for ambient noise
+            try:
+                audio = recognizer.listen(source, timeout=5)  # Listen for the audio
+                transcription = recognizer.recognize_google(audio)  # Recognize the audio using Google Speech Recognition
+                st.session_state.is_recording = False
+                st.success("Transcription completed!")
+
+                # Update the ingredients session state with the transcribed text
+                st.session_state.ingredients = transcription
+
+                # Manually update the text input to reflect new ingredients
+                st.text_input("Ingredients:", value=st.session_state.ingredients, key="ingredients_input_updated")
+
+            except sr.WaitTimeoutError:
+                st.error("Listening timed out. Please try again.")
+            except sr.UnknownValueError:
+                st.error("Sorry, I could not understand the audio.")
+            except sr.RequestError as e:
+                st.error(f"Could not request results from Google Speech Recognition service; {e}")
+
+    # Button to generate recipes using the current ingredients in session state
+    if st.button("Cook"):
+        # Get the ingredients list from session state
+        ingredient_list = st.session_state.ingredients.split(',') if st.session_state.ingredients else []
         
         if st.button("🎤 Start Recording", key="record"):
             with st.spinner("Listening..."):
@@ -318,5 +436,6 @@ def main():
         if st.button("← Back", key="back5"):
             st.session_state.page = 2
 
-if __name__ == "__main__":
-    main()
+    # Button to go back to the previous page
+    if st.button("⬅️ Back"):
+        prev_page()    
