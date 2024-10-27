@@ -15,11 +15,7 @@ import speech_recognition as sr # type: ignore
 sign_dict = {"hello": "hello.gif", "thank you": "thank_you.gif"}
 
 # Function for Voice to Text (for placeholder use)
-def voice_to_text(audio_file):
-
-
-
-    return "hello thank you"  # Dummy response
+def voice_to_text(audio_file): return "hello thank you"  # Dummy response
 
 def display_signs(text):
     words = text.lower().split()
@@ -27,9 +23,7 @@ def display_signs(text):
         if word in sign_dict:
             st.image(sign_dict[word], caption=word)
 
-def save_favorite(text):
-    with open("favorites.json", "a") as file:
-        json.dump({"text": text}, file)
+
 
 # Image Recognition API Credentials
 IMAGGA_API_KEY = "acc_3dbc34a6200e1d8"
@@ -81,6 +75,7 @@ def transcribe_audio(audio_file_path, model_path="vosk-model-small-en-us-0.15"):
     wf.close()
     return result_text.strip()
 
+'''
 def get_recipes(ingredients):
     api_url = "https://api.spoonacular.com/recipes/findByIngredients"
     api_key = "f51f1696cfdf434f9b5081e01e534ea0"  # Replace with your actual API key
@@ -98,6 +93,43 @@ def get_recipes(ingredients):
     else:
         st.error(f"Error fetching recipes: {response.status_code}")
         return []
+'''
+
+def get_tasty_recipes(ingredients):
+    api_url = "https://tasty.p.rapidapi.com/recipes/list"
+    headers = {
+        "X-RapidAPI-Key": "3fbf67f012mshe98341a8fff273bp1d6aedjsn010aaef24072",  # Replace with your actual API key
+        "X-RapidAPI-Host": "tasty.p.rapidapi.com"
+    }
+    params = {
+        "from": 0,
+        "size": 5,  # Number of recipes to return
+        "tags": ",".join(ingredients),  # Join ingredients for the query
+    }
+
+    response = requests.get(api_url, headers=headers, params=params)
+
+    if response.status_code == 200:
+        return response.json()  # Return the JSON response containing recipes
+    else:
+        st.error(f"Error fetching recipes: {response.status_code}")
+        return []
+
+def get_recipe_details(recipe_id):
+    api_url = f"https://tasty.p.rapidapi.com/recipes/get-details?id={recipe_id}"
+    headers = {
+        "X-RapidAPI-Host": "tasty.p.rapidapi.com",
+        "X-RapidAPI-Key": "YOUR_RAPIDAPI_KEY"  # Replace with your RapidAPI key
+    }
+
+    response = requests.get(api_url, headers=headers)
+
+    if response.status_code == 200:
+        return response.json()  # Return the JSON response containing recipe details
+    else:
+        st.error(f"Error fetching recipe details: {response.status_code}")
+        return None
+
 
 # Custom CSS
 st.markdown(
@@ -204,15 +236,15 @@ elif st.session_state.page == 3:
         
         if ingredient_list:
             ingredient_list = [ingredient.strip() for ingredient in ingredient_list]  # Clean up whitespace
-            recipes = get_recipes(ingredient_list)  # Fetch recipes based on ingredients
+            recipes = get_tasty_recipes(ingredient_list)  # Fetch recipes based on ingredients
 
             # Display the recipes with clickable links
             if recipes:
                 st.write("Here are some recipes you can try:")
-                for recipe in recipes:
-                    recipe_title = recipe['title']
-                    search_url = f"https://www.google.com/search?q={recipe_title.replace(' ', '+')}"
-                    st.markdown(f"- **[{recipe_title}]({search_url})**", unsafe_allow_html=True)
+                for recipe in recipes['results']:
+                    recipe_title = recipe['name']
+                    recipe_url = recipe['original_video_url'] or recipe['video_url']  # Use video link if available
+                    st.markdown(f"- **[{recipe_title}]({recipe_url})**", unsafe_allow_html=True)
             else:
                 st.write("No recipes found for the given ingredients.")
         else:
