@@ -136,10 +136,22 @@ st.markdown("""
             border-radius: 0.5rem;
             margin: 1rem 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            align: left;
+            width: 100%;
         }
+            
+        .recipe-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            gap: 1rem; 
+        }
+
         .recipe-card h3 {
-    color: black !important;
-}
+            color: black !important;
+        }
         
         .input-container {
             background: white;
@@ -174,7 +186,7 @@ if st.session_state.page == 1:
 # Page 2: Input Method
 elif st.session_state.page == 2:
     st.markdown("<h2 class='subtitle'>How would you like to input your ingredients?</h2>", unsafe_allow_html=True)
-
+    st.session_state.page = 2
     col1, col2 = st.columns(2)
     with col1:
         if st.button("Tell us with your voice 🎤"):
@@ -184,7 +196,7 @@ elif st.session_state.page == 2:
         if st.button("Type in Manually ⌨️"):
             st.session_state.page = 3
 
-    if st.button("⬅️ Back"):
+    if st.button("⬅️ Back to Home"):
         st.session_state.page = 1
 
 # Page 3: Manual Input
@@ -192,7 +204,6 @@ elif st.session_state.page == 3:
     st.markdown("<h2 class='subtitle'>What ingredients do you have?</h2>", unsafe_allow_html=True)
     
     with st.container():
-        st.markdown("<div class='input-container'>", unsafe_allow_html=True)
         ingredients = st.text_input("", 
                                   value=st.session_state.ingredients,
                                   placeholder="e.g., tomatoes, beans, onions...")
@@ -200,31 +211,34 @@ elif st.session_state.page == 3:
         st.markdown("</div>", unsafe_allow_html=True)
 
         col1, col2 = st.columns([1,1])
-        with col1:
-            if st.button("⬅️ Back"):
-                st.session_state.page = 2
-        with col2:
-            if st.button("Find Recipes 🍳"):
-                if ingredients:
-                    ingredient_list = [i.strip() for i in ingredients.split(',') if i.strip()]
-                    with st.spinner('Finding recipes...'):
-                        recipes = get_tasty_recipes(ingredient_list)
 
-                    if recipes and recipes.get('results'):
-                        st.success("Found some recipes for you!")
-                        for recipe in recipes['results']:
-                            st.markdown(f"""
-                                <div class='recipe-card'>
-                                    <h3>{recipe['name']}</h3>
-                                    <a href="{recipe['original_video_url'] or recipe['video_url']}" target="_blank">
-                                        View Recipe →
-                                    </a>
-                                </div>
-                            """, unsafe_allow_html=True)
-                    else:
-                        st.error("No recipes found. Try different ingredients!")
+        if st.button("Find Recipes 🍳"):
+            if ingredients:
+                ingredient_list = [i.strip() for i in ingredients.split(',') if i.strip()]
+                with st.spinner('Finding recipes...'):
+                    recipes = get_tasty_recipes(ingredient_list)
+
+                if recipes and recipes.get('results'):
+                    st.success("Found some recipes for you!")
+                    st.markdown("<div class='recipe-container'>", unsafe_allow_html=True)  # Container for centering
+                    for recipe in recipes['results']:
+                        st.markdown(f"""
+                            <div class='recipe-card'>
+                                <h3>{recipe['name']}</h3>
+                                <a href="{recipe['original_video_url'] or recipe['video_url']}" target="_blank">
+                                    View Recipe →
+                                </a>
+                            </div>
+                        """, unsafe_allow_html=True)
+                    st.markdown("</div>", unsafe_allow_html=True)  # Close the container div
+
                 else:
-                    st.warning("Please enter some ingredients first!")
+                    st.error("No recipes found. Try different ingredients!")
+            else:
+                st.warning("Please enter some ingredients first!")
+
+        if st.button("⬅️ Back to Home"):
+                st.session_state.page = 1
 
 # Page 4: Voice Input
 elif st.session_state.page == 4:
@@ -275,5 +289,5 @@ elif st.session_state.page == 4:
                     except sr.RequestError as e:
                         st.error(f"There was an error with the speech recognition service.")
 
-    if st.button("⬅️ Back"):
-        st.session_state.page = 2
+    if st.button("⬅️ Back to Home"):
+        st.session_state.page = 1
