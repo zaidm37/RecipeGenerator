@@ -266,9 +266,11 @@ elif st.session_state.page == 4:
 
                         if recipes and recipes.get('results'):
                             for recipe in recipes['results']:
+                                thumbnail_url = recipe.get('thumbnail_url')
                                 st.markdown(f"""
                                     <div class='recipe-card'>
                                         <h3>{recipe['name']}</h3>
+                                        {"<img src='" + thumbnail_url + "' width='100%' style='margin-bottom: 1rem;' />" if thumbnail_url else ""}
                                         <a href="{recipe['original_video_url'] or recipe['video_url']}" target="_blank">
                                             View Recipe →
                                         </a>
@@ -283,7 +285,6 @@ elif st.session_state.page == 4:
                         st.error("Sorry, I couldn't understand that. Please try again.")
                     except sr.RequestError as e:
                         st.error(f"There was an error with the speech recognition service.")
-
 
     if st.button("⬅️ Back to Home"):
         st.session_state.page = 1
