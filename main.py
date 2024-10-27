@@ -131,11 +131,15 @@ st.markdown("""
         
         .recipe-card {
             background: white;
+            color: black;
             padding: 1.5rem;
             border-radius: 0.5rem;
             margin: 1rem 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        .recipe-card h3 {
+    color: black !important;
+}
         
         .input-container {
             background: white;
