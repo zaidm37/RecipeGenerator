@@ -241,19 +241,10 @@ elif st.session_state.page == 5:  # Update the page number to match the new logi
     if st.button("⬅️ Back"):
         st.session_state.page = 2
 
-# Page 4: Manual Input
+# Page 4: Audio Input
 elif st.session_state.page == 4:
     st.markdown("<h3>Tell us what you got... (e.g., tomatoes, beans...)</h3>", unsafe_allow_html=True)
 
-    # Initialize ingredients session state if it doesn't exist
-    if 'ingredients' not in st.session_state:
-        st.session_state.ingredients = ""
-
-    # Display a single text input that shows either typed or transcribed ingredients
-    ingredients = st.text_input("Ingredients:", value=st.session_state.ingredients, key="ingredients_input")
-
-    # Update session state when the user types manually
-    st.session_state.ingredients = ingredients
 
     # Button to start live transcription
     if st.button("🎤 Start Speaking"):
@@ -271,12 +262,29 @@ elif st.session_state.page == 4:
                 transcription = recognizer.recognize_google(audio)  # Recognize the audio using Google Speech Recognition
                 st.session_state.is_recording = False
                 st.success("Transcription completed!")
+                st.markdown(f"**You said:** {transcription}")
 
                 # Update the ingredients session state with the transcribed text
                 st.session_state.ingredients = transcription
 
-                # Manually update the text input to reflect new ingredients
-                st.text_input("Ingredients:", value=st.session_state.ingredients, key="ingredients_input_updated")
+                # Now that we have the ingredients, automatically generate recipes
+                ingredient_list = st.session_state.ingredients.split(',')
+                ingredient_list = [ingredient.strip() for ingredient in ingredient_list if ingredient.strip()]  # Clean up whitespace
+
+                if ingredient_list:
+                    recipes = get_tasty_recipes(ingredient_list)  # Fetch recipes based on ingredients
+
+                    # Display the recipes with clickable links
+                    if recipes:
+                        st.write("Here are some recipes you can try:")
+                        for recipe in recipes['results']:
+                            recipe_title = recipe['name']
+                            recipe_url = recipe['original_video_url'] or recipe['video_url']  # Use video link if available
+                            st.markdown(f"- **[{recipe_title}]({recipe_url})**", unsafe_allow_html=True)
+                    else:
+                        st.write("No recipes found for the given ingredients.")
+                else:
+                    st.warning("No valid ingredients were detected.")
 
             except sr.WaitTimeoutError:
                 st.error("Listening timed out. Please try again.")
@@ -285,27 +293,6 @@ elif st.session_state.page == 4:
             except sr.RequestError as e:
                 st.error(f"Could not request results from Google Speech Recognition service; {e}")
 
-    # Button to generate recipes using the current ingredients in session state
-    if st.button("Cook"):
-        # Get the ingredients list from session state
-        ingredient_list = st.session_state.ingredients.split(',') if st.session_state.ingredients else []
-        
-        if ingredient_list:
-            ingredient_list = [ingredient.strip() for ingredient in ingredient_list]  # Clean up whitespace
-            recipes = get_tasty_recipes(ingredient_list)  # Fetch recipes based on ingredients
-
-            # Display the recipes with clickable links
-            if recipes:
-                st.write("Here are some recipes you can try:")
-                for recipe in recipes['results']:
-                    recipe_title = recipe['name']
-                    recipe_url = recipe['original_video_url'] or recipe['video_url']  # Use video link if available
-                    st.markdown(f"- **[{recipe_title}]({recipe_url})**", unsafe_allow_html=True)
-            else:
-                st.write("No recipes found for the given ingredients.")
-        else:
-            st.warning("Please enter some ingredients or use the microphone to speak.")
-
     # Button to go back to the previous page
     if st.button("⬅️ Back"):
-        st.session_state.page = 2    
+        st.session_state.page = 2
