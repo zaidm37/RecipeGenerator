@@ -155,7 +155,7 @@ if st.session_state.page == 1:
     st.markdown("<h1 class='main-title'>Pantry Pal</h1>", unsafe_allow_html=True)
 
     if st.button('Get Started'):
-        st.session_state.page == 2
+        next_page()
 
 # Page 2: Input Method
 elif st.session_state.page == 2:
