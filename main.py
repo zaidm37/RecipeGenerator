@@ -213,14 +213,17 @@ elif st.session_state.page == 3:
                     if recipes and recipes.get('results'):
                         st.success("Found some recipes for you!")
                         for recipe in recipes['results']:
+                            thumbnail_url = recipe.get('thumbnail_url')
                             st.markdown(f"""
-                                <div class='recipe-card'>
-                                    <h3>{recipe['name']}</h3>
-                                    <a href="{recipe['original_video_url'] or recipe['video_url']}" target="_blank">
-                                        View Recipe →
-                                    </a>
-                                </div>
-                            """, unsafe_allow_html=True)
+                                 <div class='recipe-card'>
+                                     <h3>{recipe['name']}</h3>
+                                        {"<img src='" + thumbnail_url + "' width='100%' style='margin-bottom: 1rem;' />" if thumbnail_url else ""}
+                                         <a href="{recipe['original_video_url'] or recipe['video_url']}" target="_blank">
+                                             View Recipe →
+                </a>
+            </div>
+        """, unsafe_allow_html=True)
+
                     else:
                         st.error("No recipes found. Try different ingredients!")
                 else:
