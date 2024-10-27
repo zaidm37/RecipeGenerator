@@ -285,6 +285,6 @@ elif st.session_state.page == 4:
                         st.error(f"There was an error with the speech recognition service.")
 
 
-    if st.button("⬅️ Back"):
-        st.session_state.page = 2
+    if st.button("⬅️ Back to Home"):
+        st.session_state.page = 1
 
